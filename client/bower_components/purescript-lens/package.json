@@ -1,0 +1,29 @@
+{
+  "name": "purescript-lens",
+  "version": "0.6.0",
+  "description": "PureScript implementation of Lens",
+  "license": "MIT",
+  "homepage": "https://github.com/joneshf/purescript-lens",
+  "keywords": [
+    "PureScript",
+    "lens"
+  ],
+  "authors": [
+    "Hardy Jones <jones3.hardy@gmail.com> (https://github.com/joneshf)",
+    "John A. De Goes <john@degoes.net> (http://degoes.net)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/joneshf/purescript-lens.git"
+  },
+  "devDependencies": {
+    "gulp": "~3.8.6",
+    "gulp-bump": "^0.1.11",
+    "gulp-filter": "^1.0.2",
+    "gulp-git": "^0.5.5",
+    "gulp-purescript": "^0.1.2",
+    "gulp-run": "~1.6.4",
+    "gulp-tag-version": "^1.2.1",
+    "run-sequence": "^0.3.6"
+  }
+}

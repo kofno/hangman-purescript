@@ -1,0 +1,34 @@
+{
+  "name": "purescript-arrays",
+  "homepage": "https://github.com/purescript/purescript-arrays",
+  "description": "Array utility functions",
+  "keywords": [
+    "purescript"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "node_modules",
+    "output",
+    "tests",
+    "tmp",
+    "bower.json",
+    "Gruntfile.js",
+    "package.json"
+  ],
+  "dependencies": {
+    "purescript-maybe": "~0.2.0",
+    "purescript-control": "~0.2.0"
+  },
+  "version": "0.3.6",
+  "_release": "0.3.6",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.3.6",
+    "commit": "b376ae8724285b362f26491ec58367c109fcee8b"
+  },
+  "_source": "git://github.com/purescript/purescript-arrays.git",
+  "_target": "0.3.x",
+  "_originalSource": "purescript-arrays"
+}
