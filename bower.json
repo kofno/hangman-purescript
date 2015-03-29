@@ -13,6 +13,7 @@
   "dependencies": {
     "purescript-thermite": "~0.5.3",
     "purescript-strings": "~0.4.5",
-    "purescript-arrays": "~0.3.6"
+    "purescript-arrays": "~0.3.6",
+    "purescript-lens": "~0.6.0"
   }
 }

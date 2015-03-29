@@ -8,15 +8,26 @@ import qualified Thermite.Html as T
 import qualified Thermite.Html.Elements as T
 import qualified Thermite.Html.Attributes as A
 
+import Optic.Core (LensP(), (..), (++~))
+
 import Data.Array (map)
 import Data.String (indexOf, fromChar, toCharArray)
 
 import Debug.Trace
 
+data Action = Guess String
+
+------------ State and some Lenses --------------------
 data State = State { guesses :: String
                    }
 
-data Action = Guess String
+_State :: LensP State { guesses :: _ }
+_State f (State st) = State <$> f st
+
+guesses :: forall r. LensP { guesses :: _ | r } _
+guesses f st = f st.guesses <#> \i -> st { guesses = i }
+
+--------------------------------------------------------
 
 initialState :: State
 initialState = State { guesses : "" }
@@ -46,10 +57,10 @@ render ctx (State { guesses : g }) _ =
       letters = map fromChar (toCharArray "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 performAction :: T.PerformAction _ Action (T.Action _ State)
-performAction _ (Guess s) = T.modifyState updateGuesses
+performAction _ action = T.modifyState (updateState action)
   where
-    updateGuesses :: State -> State
-    updateGuesses (State { guesses : g }) = State { guesses : g ++ s }
+    updateState :: Action -> State -> State
+    updateState (Guess l)  = _State .. guesses ++~ l
 
 
 spec :: T.Spec _ State _ Action
