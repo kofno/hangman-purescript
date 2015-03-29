@@ -1,6 +1,7 @@
 .psci
 .psci_modules
 bower_components
+node_modules
 *.swp
-
 output
+.DS_Store
