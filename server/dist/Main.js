@@ -2,21 +2,388 @@
 var PS = PS || {};
 PS.Prelude = (function () {
     "use strict";
+    
+    function showNumberImpl(n) {
+      return n.toString();
+    }
+    ;
+    
+    function numAdd(n1) {
+      return function(n2) {
+        return n1 + n2;
+      };
+    }
+    ;
+    
+    function numSub(n1) {
+      return function(n2) {
+        return n1 - n2;
+      };
+    }
+    ;
+    
+    function numMul(n1) {
+      return function(n2) {
+        return n1 * n2;
+      };
+    }
+    ;
+    
+    function refEq(r1) {
+      return function(r2) {
+        return r1 === r2;
+      };
+    }
+    ;
+    
+    function refIneq(r1) {
+      return function(r2) {
+        return r1 !== r2;
+      };
+    }
+    ;
+    
+    function unsafeCompareImpl(lt) {
+      return function(eq) {
+        return function(gt) {
+          return function(x) {
+            return function(y) {
+              return x < y ? lt : x > y ? gt : eq;
+            };
+          };
+        };
+      };
+    }
+    ;
+    
+    function numShl(n1) {
+      return function(n2) {
+        return n1 << n2;
+      };
+    }
+    ;
+    
+    function numShr(n1) {
+      return function(n2) {
+        return n1 >> n2;
+      };
+    }
+    ;
+    
+    function numZshr(n1) {
+      return function(n2) {
+        return n1 >>> n2;
+      };
+    }
+    ;
+    
+    function numAnd(n1) {
+      return function(n2) {
+        return n1 & n2;
+      };
+    }
+    ;
+    
+    function numOr(n1) {
+      return function(n2) {
+        return n1 | n2;
+      };
+    }
+    ;
+    
+    function numXor(n1) {
+      return function(n2) {
+        return n1 ^ n2;
+      };
+    }
+    ;
+    
+    function numComplement(n) {
+      return ~n;
+    }
+    ;
+    
+    function boolAnd(b1) {
+      return function(b2) {
+        return b1 && b2;
+      };
+    }
+    ;
+    
+    function boolOr(b1) {
+      return function(b2) {
+        return b1 || b2;
+      };
+    }
+    ;
+    
+    function boolNot(b) {
+      return !b;
+    }
+    ;
+    
+    function concatString(s1) {
+      return function(s2) {
+        return s1 + s2;
+      };
+    }
+    ;
+    var LT = (function () {
+        function LT() {
+
+        };
+        LT.value = new LT();
+        return LT;
+    })();
+    var GT = (function () {
+        function GT() {
+
+        };
+        GT.value = new GT();
+        return GT;
+    })();
+    var EQ = (function () {
+        function EQ() {
+
+        };
+        EQ.value = new EQ();
+        return EQ;
+    })();
     var Show = function (show) {
         this.show = show;
+    };
+    var Functor = function ($less$dollar$greater) {
+        this["<$>"] = $less$dollar$greater;
+    };
+    var Apply = function ($less$times$greater, __superclass_Prelude$dotFunctor_0) {
+        this["<*>"] = $less$times$greater;
+        this["__superclass_Prelude.Functor_0"] = __superclass_Prelude$dotFunctor_0;
+    };
+    var Applicative = function (__superclass_Prelude$dotApply_0, pure) {
+        this["__superclass_Prelude.Apply_0"] = __superclass_Prelude$dotApply_0;
+        this.pure = pure;
+    };
+    var Bind = function ($greater$greater$eq, __superclass_Prelude$dotApply_0) {
+        this[">>="] = $greater$greater$eq;
+        this["__superclass_Prelude.Apply_0"] = __superclass_Prelude$dotApply_0;
+    };
+    var Monad = function (__superclass_Prelude$dotApplicative_0, __superclass_Prelude$dotBind_1) {
+        this["__superclass_Prelude.Applicative_0"] = __superclass_Prelude$dotApplicative_0;
+        this["__superclass_Prelude.Bind_1"] = __superclass_Prelude$dotBind_1;
+    };
+    var Semiring = function ($times, $plus, one, zero) {
+        this["*"] = $times;
+        this["+"] = $plus;
+        this.one = one;
+        this.zero = zero;
+    };
+    var Ring = function ($minus, __superclass_Prelude$dotSemiring_0) {
+        this["-"] = $minus;
+        this["__superclass_Prelude.Semiring_0"] = __superclass_Prelude$dotSemiring_0;
+    };
+    var Eq = function ($div$eq, $eq$eq) {
+        this["/="] = $div$eq;
+        this["=="] = $eq$eq;
+    };
+    var Ord = function (__superclass_Prelude$dotEq_0, compare) {
+        this["__superclass_Prelude.Eq_0"] = __superclass_Prelude$dotEq_0;
+        this.compare = compare;
+    };
+    var Bits = function ($dot$amp$dot, $dot$up$dot, $dot$bar$dot, complement, shl, shr, zshr) {
+        this[".&."] = $dot$amp$dot;
+        this[".^."] = $dot$up$dot;
+        this[".|."] = $dot$bar$dot;
+        this.complement = complement;
+        this.shl = shl;
+        this.shr = shr;
+        this.zshr = zshr;
+    };
+    var BoolLike = function ($amp$amp, not, $bar$bar) {
+        this["&&"] = $amp$amp;
+        this.not = not;
+        this["||"] = $bar$bar;
+    };
+    var Semigroup = function ($less$greater) {
+        this["<>"] = $less$greater;
+    };
+    var $bar$bar = function (dict) {
+        return dict["||"];
+    };
+    var $greater$greater$eq = function (dict) {
+        return dict[">>="];
+    };
+    var $less$greater = function (dict) {
+        return dict["<>"];
+    };
+    var $less$times$greater = function (dict) {
+        return dict["<*>"];
+    };
+    var $div$eq = function (dict) {
+        return dict["/="];
+    };
+    var $minus = function (dict) {
+        return dict["-"];
+    };
+    var $plus$plus = function (__dict_Semigroup_2) {
+        return $less$greater(__dict_Semigroup_2);
+    };
+    var $plus = function (dict) {
+        return dict["+"];
+    };
+    var $times = function (dict) {
+        return dict["*"];
     };
     var $dollar = function (f) {
         return function (x) {
             return f(x);
         };
     };
+    var unsafeCompare = unsafeCompareImpl(LT.value)(EQ.value)(GT.value);
+    var showNumber = new Show(showNumberImpl);
     var show = function (dict) {
         return dict.show;
     };
+    var semiringNumber = new Semiring(numMul, numAdd, 1, 0);
+    var semigroupString = new Semigroup(concatString);
+    var ringNumber = new Ring(numSub, function () {
+        return semiringNumber;
+    });
+    var pure = function (dict) {
+        return dict.pure;
+    };
+    var $$return = function (__dict_Monad_5) {
+        return pure(__dict_Monad_5["__superclass_Prelude.Applicative_0"]());
+    };
+    var liftM1 = function (__dict_Monad_7) {
+        return function (f) {
+            return function (a) {
+                return $greater$greater$eq(__dict_Monad_7["__superclass_Prelude.Bind_1"]())(a)(function (_0) {
+                    return $$return(__dict_Monad_7)(f(_0));
+                });
+            };
+        };
+    };
+    var liftA1 = function (__dict_Applicative_8) {
+        return function (f) {
+            return function (a) {
+                return $less$times$greater(__dict_Applicative_8["__superclass_Prelude.Apply_0"]())(pure(__dict_Applicative_8)(f))(a);
+            };
+        };
+    };
+    var eqNumber = new Eq(refIneq, refEq);
+    var ordNumber = new Ord(function () {
+        return eqNumber;
+    }, unsafeCompare);
+    var complement = function (dict) {
+        return dict.complement;
+    };
+    var compare = function (dict) {
+        return dict.compare;
+    };
+    var $less = function (__dict_Ord_12) {
+        return function (a1) {
+            return function (a2) {
+                var _505 = compare(__dict_Ord_12)(a1)(a2);
+                if (_505 instanceof LT) {
+                    return true;
+                };
+                return false;
+            };
+        };
+    };
+    var $greater$eq = function (__dict_Ord_15) {
+        return function (a1) {
+            return function (a2) {
+                var _506 = compare(__dict_Ord_15)(a1)(a2);
+                if (_506 instanceof LT) {
+                    return false;
+                };
+                return true;
+            };
+        };
+    };
+    var boolLikeBoolean = new BoolLike(boolAnd, boolNot, boolOr);
+    var bitsNumber = new Bits(numAnd, numXor, numOr, numComplement, numShl, numShr, numZshr);
+    var ap = function (__dict_Monad_16) {
+        return function (f) {
+            return function (a) {
+                return $greater$greater$eq(__dict_Monad_16["__superclass_Prelude.Bind_1"]())(f)(function (_2) {
+                    return $greater$greater$eq(__dict_Monad_16["__superclass_Prelude.Bind_1"]())(a)(function (_1) {
+                        return $$return(__dict_Monad_16)(_2(_1));
+                    });
+                });
+            };
+        };
+    };
     return {
+        LT: LT, 
+        GT: GT, 
+        EQ: EQ, 
+        Semigroup: Semigroup, 
+        BoolLike: BoolLike, 
+        Bits: Bits, 
+        Ord: Ord, 
+        Eq: Eq, 
+        Ring: Ring, 
+        Semiring: Semiring, 
+        Monad: Monad, 
+        Bind: Bind, 
+        Applicative: Applicative, 
+        Apply: Apply, 
+        Functor: Functor, 
         Show: Show, 
+        "++": $plus$plus, 
+        "<>": $less$greater, 
+        "||": $bar$bar, 
+        complement: complement, 
+        ">=": $greater$eq, 
+        "<": $less, 
+        compare: compare, 
+        "/=": $div$eq, 
+        "-": $minus, 
+        "*": $times, 
+        "+": $plus, 
+        ap: ap, 
+        liftM1: liftM1, 
+        "return": $$return, 
+        ">>=": $greater$greater$eq, 
+        liftA1: liftA1, 
+        pure: pure, 
+        "<*>": $less$times$greater, 
         show: show, 
-        "$": $dollar
+        "$": $dollar, 
+        showNumber: showNumber, 
+        semiringNumber: semiringNumber, 
+        ringNumber: ringNumber, 
+        eqNumber: eqNumber, 
+        ordNumber: ordNumber, 
+        bitsNumber: bitsNumber, 
+        boolLikeBoolean: boolLikeBoolean, 
+        semigroupString: semigroupString
+    };
+})();
+var PS = PS || {};
+PS.Prelude_Unsafe = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    
+    function unsafeIndex(xs) {
+      return function(n) {
+        return xs[n];
+      };
+    }
+    ;
+    return {
+        unsafeIndex: unsafeIndex
+    };
+})();
+var PS = PS || {};
+PS.$$Math = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var floor = Math.floor;;
+    return {
+        floor: floor
     };
 })();
 var PS = PS || {};
@@ -26,6 +393,187 @@ PS.Data_Foreign_EasyFFI = (function () {
     function unsafeForeignProcedure(args) {  return function (stmt) {    return Function(wrap(args.slice()))();    function wrap() {      return !args.length ? stmt : 'return function (' + args.shift() + ') { ' + wrap() + ' };';    }  };};
     return {
         unsafeForeignProcedure: unsafeForeignProcedure
+    };
+})();
+var PS = PS || {};
+PS.Control_Monad_Eff = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    
+    function returnE(a) {
+      return function() {
+        return a;
+      };
+    }
+    ;
+    
+    function bindE(a) {
+      return function(f) {
+        return function() {
+          return f(a())();
+        };
+      };
+    }
+    ;
+    var monadEff = new Prelude.Monad(function () {
+        return applicativeEff;
+    }, function () {
+        return bindEff;
+    });
+    var bindEff = new Prelude.Bind(bindE, function () {
+        return applyEff;
+    });
+    var applyEff = new Prelude.Apply(Prelude.ap(monadEff), function () {
+        return functorEff;
+    });
+    var applicativeEff = new Prelude.Applicative(function () {
+        return applyEff;
+    }, returnE);
+    var functorEff = new Prelude.Functor(Prelude.liftA1(applicativeEff));
+    return {
+        functorEff: functorEff, 
+        applyEff: applyEff, 
+        applicativeEff: applicativeEff, 
+        bindEff: bindEff, 
+        monadEff: monadEff
+    };
+})();
+var PS = PS || {};
+PS.Control_Monad_Eff_Exception = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    
+  function error(msg) {
+    return new Error(msg);
+  }
+  ;
+    return {
+        error: error
+    };
+})();
+var PS = PS || {};
+PS.Control_Monad_Eff_Random = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var $$Math = PS.$$Math;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    
+  function random() {
+    return Math.random();
+  }
+  ;
+    var randomInt = function (low) {
+        return function (high) {
+            return function __do() {
+                var _3 = random();
+                return $$Math.floor(_3 * ((high - low) + 1)) + low;
+            };
+        };
+    };
+    return {
+        randomInt: randomInt, 
+        random: random
+    };
+})();
+var PS = PS || {};
+PS.Control_Monad_Eff_Unsafe = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    
+    function unsafeInterleaveEff(f) {
+      return f;
+    }
+    ;
+    return {
+        unsafeInterleaveEff: unsafeInterleaveEff
+    };
+})();
+var PS = PS || {};
+PS.Data_Maybe = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Alt = PS.Control_Alt;
+    var Control_Alternative = PS.Control_Alternative;
+    var Control_Extend = PS.Control_Extend;
+    var Control_MonadPlus = PS.Control_MonadPlus;
+    var Control_Plus = PS.Control_Plus;
+    var Nothing = (function () {
+        function Nothing() {
+
+        };
+        Nothing.value = new Nothing();
+        return Nothing;
+    })();
+    var Just = (function () {
+        function Just(value0) {
+            this.value0 = value0;
+        };
+        Just.create = function (value0) {
+            return new Just(value0);
+        };
+        return Just;
+    })();
+    return {
+        Nothing: Nothing, 
+        Just: Just
+    };
+})();
+var PS = PS || {};
+PS.Data_Array = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Data_Maybe = PS.Data_Maybe;
+    var Control_Alt = PS.Control_Alt;
+    var Control_Plus = PS.Control_Plus;
+    var Control_Alternative = PS.Control_Alternative;
+    var Control_MonadPlus = PS.Control_MonadPlus;
+    var Prelude_Unsafe = PS.Prelude_Unsafe;
+    function length (xs) {  return xs.length;};
+    var $bang$bang = function (xs) {
+        return function (n) {
+            var isInt = function (n_1) {
+                return n_1 !== ~~n_1;
+            };
+            var _510 = n < 0 || (n >= length(xs) || isInt(n));
+            if (_510) {
+                return Data_Maybe.Nothing.value;
+            };
+            if (!_510) {
+                return new Data_Maybe.Just(xs[n]);
+            };
+            throw new Error("Failed pattern match");
+        };
+    };
+    return {
+        length: length, 
+        "!!": $bang$bang
+    };
+})();
+var PS = PS || {};
+PS.Control_Monad_Eff_Class = (function () {
+    "use strict";
+    var Prelude = PS.Prelude;
+    var Control_Monad_Trans = PS.Control_Monad_Trans;
+    var Data_Monoid = PS.Data_Monoid;
+    var Control_Monad_Eff = PS.Control_Monad_Eff;
+    var Control_Monad_Maybe_Trans = PS.Control_Monad_Maybe_Trans;
+    var Control_Monad_Error_Trans = PS.Control_Monad_Error_Trans;
+    var Control_Monad_State_Trans = PS.Control_Monad_State_Trans;
+    var Control_Monad_Writer_Trans = PS.Control_Monad_Writer_Trans;
+    var Control_Monad_Reader_Trans = PS.Control_Monad_Reader_Trans;
+    var Control_Monad_RWS_Trans = PS.Control_Monad_RWS_Trans;
+    var MonadEff = function (__superclass_Prelude$dotMonad_0, liftEff) {
+        this["__superclass_Prelude.Monad_0"] = __superclass_Prelude$dotMonad_0;
+        this.liftEff = liftEff;
+    };
+    var liftEff = function (dict) {
+        return dict.liftEff;
+    };
+    return {
+        MonadEff: MonadEff, 
+        liftEff: liftEff
     };
 })();
 var PS = PS || {};
@@ -107,33 +655,33 @@ PS.Node_Express_Types = (function () {
         return CustomMethod;
     })();
     var RoutePattern = {};
-    var showMethod = new Prelude.Show(function (_361) {
-        if (_361 instanceof ALL) {
+    var showMethod = new Prelude.Show(function (_364) {
+        if (_364 instanceof ALL) {
             return "all";
         };
-        if (_361 instanceof GET) {
+        if (_364 instanceof GET) {
             return "get";
         };
-        if (_361 instanceof POST) {
+        if (_364 instanceof POST) {
             return "post";
         };
-        if (_361 instanceof PUT) {
+        if (_364 instanceof PUT) {
             return "put";
         };
-        if (_361 instanceof DELETE) {
+        if (_364 instanceof DELETE) {
             return "delete";
         };
-        if (_361 instanceof OPTIONS) {
+        if (_364 instanceof OPTIONS) {
             return "options";
         };
-        if (_361 instanceof HEAD) {
+        if (_364 instanceof HEAD) {
             return "head";
         };
-        if (_361 instanceof TRACE) {
+        if (_364 instanceof TRACE) {
             return "trace";
         };
-        if (_361 instanceof CustomMethod) {
-            return _361.value0;
+        if (_364 instanceof CustomMethod) {
+            return _364.value0;
         };
         throw new Error("Failed pattern match");
     });
@@ -151,6 +699,20 @@ PS.Node_Express_Types = (function () {
         RoutePattern: RoutePattern, 
         showMethod: showMethod, 
         routePath: routePath
+    };
+})();
+var PS = PS || {};
+PS.Node_Express_Internal_Utils = (function () {
+    "use strict";
+    var Data_Foreign_EasyFFI = PS.Data_Foreign_EasyFFI;
+    var Prelude = PS.Prelude;
+    var Data_Either = PS.Data_Either;
+    var Data_Maybe = PS.Data_Maybe;
+    var Control_Monad_Eff_Exception = PS.Control_Monad_Eff_Exception;
+    var Node_Express_Types = PS.Node_Express_Types;
+    var intlNextWithError = Data_Foreign_EasyFFI.unsafeForeignProcedure([ "nxt", "err", "" ])("nxt(err);");
+    return {
+        intlNextWithError: intlNextWithError
     };
 })();
 var PS = PS || {};
@@ -196,21 +758,111 @@ PS.Node_Express_Handler = (function () {
         };
         return HandlerM;
     })();
-    var withHandler = function (_487) {
-        return _487.value0;
+    var withHandler = function (_490) {
+        return _490.value0;
     };
     var sendJson = function (data_) {
-        return new HandlerM(function (_472) {
+        return new HandlerM(function (_475) {
             return function (resp) {
-                return function (_471) {
+                return function (_474) {
                     return Node_Express_Internal_Response.intlRespSendJson(resp)(data_);
                 };
             };
         });
     };
+    var nextThrow = function (err) {
+        return new HandlerM(function (_411) {
+            return function (_410) {
+                return function (nxt) {
+                    return Node_Express_Internal_Utils.intlNextWithError(nxt)(err);
+                };
+            };
+        });
+    };
+    var functorHandlerM = new Prelude.Functor(function (f) {
+        return function (_491) {
+            return new HandlerM(function (req) {
+                return function (resp) {
+                    return function (nxt) {
+                        return function __do() {
+                            var r = _491.value0(req)(resp)(nxt)();
+                            return f(r);
+                        };
+                    };
+                };
+            });
+        };
+    });
+    var applyHandlerM = new Prelude.Apply(function (_492) {
+        return function (_493) {
+            return new HandlerM(function (req) {
+                return function (resp) {
+                    return function (nxt) {
+                        return function __do() {
+                            var _69 = _493.value0(req)(resp)(nxt)();
+                            var _68 = _492.value0(req)(resp)(nxt)();
+                            return _68(_69);
+                        };
+                    };
+                };
+            });
+        };
+    }, function () {
+        return functorHandlerM;
+    });
+    var bindHandlerM = new Prelude.Bind(function (_494) {
+        return function (f) {
+            return new HandlerM(function (req) {
+                return function (resp) {
+                    return function (nxt) {
+                        return function __do() {
+                            var _70 = Prelude.liftM1(Control_Monad_Eff.monadEff)(f)(_494.value0(req)(resp)(nxt))();
+                            return _70.value0(req)(resp)(nxt)();
+                        };
+                    };
+                };
+            });
+        };
+    }, function () {
+        return applyHandlerM;
+    });
+    var applicativeHandlerM = new Prelude.Applicative(function () {
+        return applyHandlerM;
+    }, function (x) {
+        return new HandlerM(function (_404) {
+            return function (_403) {
+                return function (_402) {
+                    return Prelude["return"](Control_Monad_Eff.monadEff)(x);
+                };
+            };
+        });
+    });
+    var monadHandlerM = new Prelude.Monad(function () {
+        return applicativeHandlerM;
+    }, function () {
+        return bindHandlerM;
+    });
+    var monadEffHandlerM = new Control_Monad_Eff_Class.MonadEff(function () {
+        return monadHandlerM;
+    }, function (act) {
+        return new HandlerM(function (_407) {
+            return function (_406) {
+                return function (_405) {
+                    return Control_Monad_Eff_Unsafe.unsafeInterleaveEff(act);
+                };
+            };
+        });
+    });
     return {
         sendJson: sendJson, 
-        withHandler: withHandler
+        nextThrow: nextThrow, 
+        withHandler: withHandler, 
+        functorHandlerM: functorHandlerM, 
+        applyHandlerM: applyHandlerM, 
+        applicativeHandlerM: applicativeHandlerM, 
+        bindHandlerM: bindHandlerM, 
+        monadHandlerM: monadHandlerM, 
+        monadEffHandlerM: monadEffHandlerM
     };
 })();
 var PS = PS || {};
@@ -271,9 +923,9 @@ PS.Node_Express_App = (function () {
     var get = function (__dict_RoutePattern_505) {
         return http(__dict_RoutePattern_505)(Node_Express_Types.GET.value);
     };
-    var apply = function (_496) {
+    var apply = function (_499) {
         return function (app) {
-            return _496.value0(app);
+            return _499.value0(app);
         };
     };
     return {
@@ -285,24 +937,43 @@ PS.Node_Express_App = (function () {
 var PS = PS || {};
 PS.Main = (function () {
     "use strict";
-    var Node_Express_Handler = PS.Node_Express_Handler;
-    var Node_Express_App = PS.Node_Express_App;
     var Prelude = PS.Prelude;
+    var Control_Monad_Eff_Class = PS.Control_Monad_Eff_Class;
+    var Control_Monad_Eff_Random = PS.Control_Monad_Eff_Random;
+    var Data_Array = PS.Data_Array;
+    var Node_Express_Handler = PS.Node_Express_Handler;
+    var Control_Monad_Eff_Exception = PS.Control_Monad_Eff_Exception;
+    var Node_Express_App = PS.Node_Express_App;
     var Control_Monad_Eff = PS.Control_Monad_Eff;
     var Node_Express_Types = PS.Node_Express_Types;
+    var Data_Maybe = PS.Data_Maybe;
     
   function foreignMain(attachFn) {
     return function() {
       var express = require('express');
       var app     = express();
-      app.use('/hangman', express.static('../client'));
+      app.use('/', express.static('../client'));
       attachFn(app)();
-      app.listen(3000);
+      var server = app.listen(3000, function() {
+        var port = server.address().port
+
+        console.log('Hangman listening on port %s', port)
+      });
     }
   }
   ;
-    var handler = Node_Express_Handler.sendJson({
-        puzzle: "This came from the server"
+    var puzzles = [ "Spongebob Squarepants", "Chuggington", "Peep In the Big Wide World", "Curious George", "Phineas and Ferb", "Suite Life", "Inspector Gadget", "Spy Kids", "The Croods", "Gnomeo and Juliet" ];
+    var handler = Prelude[">>="](Node_Express_Handler.bindHandlerM)(Control_Monad_Eff_Class.liftEff(Node_Express_Handler.monadEffHandlerM)(Control_Monad_Eff_Random.randomInt(1)(Data_Array.length(puzzles) - 1)))(function (_79) {
+        var _543 = Data_Array["!!"](puzzles)(_79);
+        if (_543 instanceof Data_Maybe.Just) {
+            return Node_Express_Handler.sendJson({
+                puzzle: _543.value0
+            });
+        };
+        if (_543 instanceof Data_Maybe.Nothing) {
+            return Node_Express_Handler.nextThrow(Control_Monad_Eff_Exception.error("Couldn't find a puzzle at: " + Prelude.show(Prelude.showNumber)(_79)));
+        };
+        throw new Error("Failed pattern match");
     });
     var app = Node_Express_App.get(Node_Express_Types.routePath)("/puzzle")(handler);
     var attach = Node_Express_App.apply(app);
@@ -312,7 +983,8 @@ PS.Main = (function () {
         foreignMain: foreignMain, 
         attach: attach, 
         app: app, 
-        handler: handler
+        handler: handler, 
+        puzzles: puzzles
     };
 })();
 PS.Main.main();
