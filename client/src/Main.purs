@@ -10,6 +10,7 @@ import qualified Thermite.Html.Attributes as A
 
 import Optic.Core (LensP(), (..), (++~))
 
+import Control.Monad.Eff
 import Data.Array (map, length, snoc)
 import Data.String (indexOf, split, joinWith, toUpper)
 import Data.Foldable (foldr, elem)
@@ -17,6 +18,7 @@ import Data.Foldable (foldr, elem)
 import Debug.Trace
 
 data Action = Guess String
+            | Load
 
 ------------ State and some Lenses --------------------
 data State = State { guesses :: String
@@ -38,7 +40,7 @@ initialState = State { guesses : ""
 
 render :: T.Render State _ Action
 render ctx (State st) _ =
-  T.div [A.className "hangman"] [letterButtons, maskedSolution, gallows]
+  T.div [A.className "hangman"] [letterButtons, maskedSolution, gallows, newGame]
     where
       letterButtons :: T.Html _
       letterButtons = T.div [A.className "btn-grp"] $ map letterButton letters
@@ -48,6 +50,9 @@ render ctx (State st) _ =
                                 , T.onClick ctx (\_ -> Guess l)
                                 , A.disabled (isGuessed l)
                                 ] [ T.text l ]
+
+      newGame :: T.Html _
+      newGame = T.button [T.onClick ctx (\_ -> Load)] [T.text "New Game"]
 
       isGuessed :: String -> Boolean
       isGuessed l = indexOf l st.guesses /= -1
@@ -97,7 +102,11 @@ render ctx (State st) _ =
           hit :: String -> Boolean
           hit s = toUpper s `elem` split "" (toUpper st.solution)
 
+puzzleLoader :: forall eff. (State -> Eff eff Unit) -> Eff eff Unit
+puzzleLoader f = f $ State { solution : "This should be ajax", guesses : "" }
+
 performAction :: T.PerformAction _ Action (T.Action _ State)
+performAction _ Load   = T.asyncSetState puzzleLoader
 performAction _ action = T.modifyState (updateState action)
   where
     updateState :: Action -> State -> State

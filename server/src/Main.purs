@@ -22,7 +22,7 @@ foreign import foreignMain
     return function() {
       var express = require('express');
       var app     = express();
-      app.use('/hangman', express.static('../client'));
+      app.use('/', express.static('../client'));
       attachFn(app)();
       var server = app.listen(3000, function() {
         var port = server.address().port
