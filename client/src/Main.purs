@@ -147,6 +147,7 @@ performAction _ action = T.modifyState (updateState action)
 
 spec :: T.Spec _ State _ Action
 spec = T.simpleSpec initialState performAction render
+         # T.componentWillMount Load
 
 main = do
   let component = T.createClass spec

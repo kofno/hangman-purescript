@@ -5880,7 +5880,7 @@ var performAction = function (_7) {
         return Thermite_Action.modifyState(updateState(action));
     };
 };
-var spec = Thermite.simpleSpec(initialState)(performAction)(render);
+var spec = Thermite.componentWillMount(Load.value)(Thermite.simpleSpec(initialState)(performAction)(render));
 var main = (function () {
     var component = Thermite.createClass(spec);
     return Thermite.render(component)({});
