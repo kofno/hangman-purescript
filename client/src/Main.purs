@@ -14,6 +14,9 @@ import Control.Monad.Eff
 import Data.Array (map, length, snoc)
 import Data.String (indexOf, split, joinWith, toUpper)
 import Data.Foldable (foldr, elem)
+import Data.Foreign
+import Data.Foreign.Class
+import Data.Either
 
 import Debug.Trace
 
@@ -32,6 +35,15 @@ guesses :: forall r. LensP { guesses :: _ | r } _
 guesses f st = f st.guesses <#> \i -> st { guesses = i }
 
 --------------------------------------------------------
+
+-- | Handle puzzle data coming from the backend service
+data Puzzle = Puzzle String
+
+-- | Class instance for parsing JSON responses into a puzzle
+instance puzzleIsForeign :: IsForeign Puzzle where
+  read value = do
+    puzzle <- readProp "puzzle" value
+    return $ Puzzle puzzle
 
 initialState :: State
 initialState = State { guesses : ""
@@ -102,8 +114,29 @@ render ctx (State st) _ =
           hit :: String -> Boolean
           hit s = toUpper s `elem` split "" (toUpper st.solution)
 
+foreign import puzzleGet
+  """
+  function puzzleGet(callback) {
+    return function() {
+      var ajax = new XMLHttpRequest();
+      ajax.onreadystatechange = function() {
+        if (ajax.readyState == 4) {
+          callback(ajax.responseText)();
+        }
+      }
+      ajax.open("GET", "/puzzle", true);
+      ajax.send();
+    }
+  }
+  """ :: forall eff a. (a -> Eff eff Unit) -> Eff eff Unit
+
 puzzleLoader :: forall eff. (State -> Eff eff Unit) -> Eff eff Unit
-puzzleLoader f = f $ State { solution : "This should be ajax", guesses : "" }
+puzzleLoader f = puzzleGet \txt -> f (loadedState (readJSON txt :: F Puzzle))
+
+-- | We'll need to handle the error condition when we add a game status to the state
+loadedState :: F Puzzle -> State
+loadedState (Right (Puzzle s)) = State { solution : s, guesses : "" }
+loadedState _                  = State { solution : "", guesses : "" }
 
 performAction :: T.PerformAction _ Action (T.Action _ State)
 performAction _ Load   = T.asyncSetState puzzleLoader
