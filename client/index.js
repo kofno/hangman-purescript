@@ -5664,6 +5664,7 @@ var Thermite_Types = require("Thermite.Types");
 var Control_Monad_Eff = require("Control.Monad.Eff");
 var Data_Foreign = require("Data.Foreign");
 var Data_Either = require("Data.Either");
+var Data_Tuple = require("Data.Tuple");
 var Debug_Trace = require("Debug.Trace");
 var Data_Foreign_Index = require("Data.Foreign.Index");
 var Data_Identity = require("Data.Identity");
@@ -5681,6 +5682,40 @@ var Data_Identity = require("Data.Identity");
     }
   }
   ;
+var Playing = (function () {
+    function Playing() {
+
+    };
+    Playing.value = new Playing();
+    return Playing;
+})();
+var Won = (function () {
+    function Won(value0) {
+        this.value0 = value0;
+    };
+    Won.create = function (value0) {
+        return new Won(value0);
+    };
+    return Won;
+})();
+var Lost = (function () {
+    function Lost(value0) {
+        this.value0 = value0;
+    };
+    Lost.create = function (value0) {
+        return new Lost(value0);
+    };
+    return Lost;
+})();
+var Err = (function () {
+    function Err(value0) {
+        this.value0 = value0;
+    };
+    Err.create = function (value0) {
+        return new Err(value0);
+    };
+    return Err;
+})();
 
 /**
  * ---------- State and some Lenses --------------------
@@ -5724,91 +5759,6 @@ var Load = (function () {
     Load.value = new Load();
     return Load;
 })();
-var render = function (ctx) {
-    return function (_4) {
-        return function (_5) {
-            var newGame = Thermite_Html_Elements.button([ Thermite_Events.onClick(ctx)(function (_2) {
-                return Load.value;
-            }) ])([ Thermite_Html.text("New Game") ]);
-            var misses = (function () {
-                var hit = function (s) {
-                    return Data_Foldable.elem(Prelude.eqString)(Data_Foldable.foldableArray)(Data_String.toUpper(s))(Data_String.split("")(Data_String.toUpper(_4.value0.solution)));
-                };
-                var miss = function (s) {
-                    return function (seen) {
-                        var _13 = hit(s) || Data_Foldable.elem(Prelude.eqString)(Data_Foldable.foldableArray)(s)(seen);
-                        if (_13) {
-                            return seen;
-                        };
-                        if (!_13) {
-                            return Data_Array.snoc(seen)(s);
-                        };
-                        throw new Error("Failed pattern match");
-                    };
-                };
-                return Data_Foldable.foldr(Data_Foldable.foldableArray)(miss)([  ])(Data_String.split("")(_4.value0.guesses));
-            })();
-            var letters = Data_String.split("")("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-            var isGuessed = function (l) {
-                return Data_String.indexOf(l)(_4.value0.guesses) !== -1;
-            };
-            var letterClass = function (l) {
-                var _14 = isGuessed(l);
-                if (_14) {
-                    return "btn guessed";
-                };
-                if (!_14) {
-                    return "btn";
-                };
-                throw new Error("Failed pattern match");
-            };
-            var letterButton = function (l) {
-                return Thermite_Html_Elements.button([ Thermite_Html_Attributes.className(letterClass(l)), Thermite_Events.onClick(ctx)(function (_1) {
-                    return new Guess(l);
-                }), Thermite_Html_Attributes.disabled(isGuessed(l)) ])([ Thermite_Html.text(l) ]);
-            };
-            var letterButtons = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("btn-grp") ])(Data_Array.map(letterButton)(letters));
-            var mask = function (c) {
-                if (c === " ") {
-                    return " * ";
-                };
-                var _17 = isGuessed(Data_String.toUpper(c));
-                if (_17) {
-                    return c;
-                };
-                if (!_17) {
-                    return "_";
-                };
-                throw new Error("Failed pattern match");
-            };
-            var maskedSolution = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("solution") ])([ Thermite_Html.text(Data_String.joinWith(" ")(Data_Array.map(mask)(Data_String.split("")(_4.value0.solution)))) ]);
-            var gallowsSrc = (function () {
-                var _18 = Data_Array.length(misses);
-                if (_18 === 0) {
-                    return "hm0.png";
-                };
-                if (_18 === 1) {
-                    return "hm1.png";
-                };
-                if (_18 === 2) {
-                    return "hm2.png";
-                };
-                if (_18 === 3) {
-                    return "hm3.png";
-                };
-                if (_18 === 4) {
-                    return "hm4.png";
-                };
-                if (_18 === 5) {
-                    return "hm5.png";
-                };
-                return "hm6.png";
-            })();
-            var gallows = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("gallows") ])([ Thermite_Html_Elements.img([ Thermite_Html_Attributes.src(gallowsSrc), Thermite_Html_Attributes.alt("Gallows") ])([  ]) ]);
-            return Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("hangman") ])([ letterButtons, maskedSolution, gallows, newGame ]);
-        };
-    };
-};
 
 /**
  *  | Class instance for parsing JSON responses into a puzzle
@@ -5818,20 +5768,18 @@ var puzzleIsForeign = new Data_Foreign_Class.IsForeign(function (value) {
         return Prelude["return"](Data_Either.monadEither)(new Puzzle(_0));
     });
 });
-
-/**
- *  | We'll need to handle the error condition when we add a game status to the state
- */
-var loadedState = function (_6) {
-    if (_6 instanceof Data_Either.Right) {
+var loadedState = function (_9) {
+    if (_9 instanceof Data_Either.Right) {
         return new State({
-            solution: _6.value0.value0, 
-            guesses: ""
+            solution: _9.value0.value0, 
+            guesses: "", 
+            status: Playing.value
         });
     };
     return new State({
         solution: "", 
-        guesses: ""
+        guesses: "", 
+        status: new Err("Puzzle failed to load")
     });
 };
 var puzzleLoader = function (f) {
@@ -5841,23 +5789,139 @@ var puzzleLoader = function (f) {
 };
 var initialState = new State({
     guesses: "", 
-    solution: "This is just a placeholder"
+    solution: "", 
+    status: Playing.value
 });
 var guesses = function (__dict_Functor_0) {
     return function (f) {
         return function (st) {
             return Prelude["<#>"](__dict_Functor_0)(f(st.guesses))(function (i) {
-                var _24 = {};
-                for (var _25 in st) {
-                    if (st.hasOwnProperty(_25)) {
-                        _24[_25] = st[_25];
+                var _18 = {};
+                for (var _19 in st) {
+                    if (st.hasOwnProperty(_19)) {
+                        _18[_19] = st[_19];
                     };
                 };
-                _24.guesses = i;
-                return _24;
+                _18.guesses = i;
+                return _18;
             });
         };
     };
+};
+var gameOver = function (_4) {
+    if (_4 instanceof Playing) {
+        return false;
+    };
+    return true;
+};
+
+/**
+ *  | Generalize impl of hit
+ */
+var anyCaseMatch = function (ss) {
+    return function (s) {
+        return Data_Foldable.elem(Prelude.eqString)(Data_Foldable.foldableArray)(Data_String.toUpper(s))(Data_String.split("")(Data_String.toUpper(ss))) || s === " ";
+    };
+};
+var misses = function (_7) {
+    var hit = anyCaseMatch(_7.value0.solution);
+    var miss = function (s) {
+        return function (seen) {
+            var _22 = hit(s) || Data_Foldable.elem(Prelude.eqString)(Data_Foldable.foldableArray)(s)(seen);
+            if (_22) {
+                return seen;
+            };
+            if (!_22) {
+                return Data_Array.snoc(seen)(s);
+            };
+            throw new Error("Failed pattern match");
+        };
+    };
+    return Data_Foldable.foldr(Data_Foldable.foldableArray)(miss)([  ])(Data_String.split("")(_7.value0.guesses));
+};
+var render = function (ctx) {
+    return function (_5) {
+        return function (_6) {
+            var statusMsg = function (_11) {
+                if (_11 instanceof Err) {
+                    return Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("error") ])([ Thermite_Html.text(_11.value0) ]);
+                };
+                if (_11 instanceof Won) {
+                    return Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("good") ])([ Thermite_Html.text(_11.value0) ]);
+                };
+                if (_11 instanceof Lost) {
+                    return Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("bad") ])([ Thermite_Html.text(_11.value0) ]);
+                };
+                return Thermite_Html_Elements.div([  ])([  ]);
+            };
+            var newGame = Thermite_Html_Elements.button([ Thermite_Events.onClick(ctx)(function (_2) {
+                return Load.value;
+            }) ])([ Thermite_Html.text("New Game") ]);
+            var statusBar = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("status") ])([ statusMsg(_5.value0.status), newGame ]);
+            var letters = Data_String.split("")("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+            var isGuessed = function (l) {
+                return Data_String.indexOf(l)(_5.value0.guesses) !== -1;
+            };
+            var letterClass = function (l) {
+                var _32 = isGuessed(l);
+                if (_32) {
+                    return "btn guessed";
+                };
+                if (!_32) {
+                    return "btn";
+                };
+                throw new Error("Failed pattern match");
+            };
+            var letterButton = function (l) {
+                return Thermite_Html_Elements.button([ Thermite_Html_Attributes.className(letterClass(l)), Thermite_Events.onClick(ctx)(function (_1) {
+                    return new Guess(l);
+                }), Thermite_Html_Attributes.disabled(isGuessed(l) || gameOver(_5.value0.status)) ])([ Thermite_Html.text(l) ]);
+            };
+            var letterButtons = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("btn-grp") ])(Data_Array.map(letterButton)(letters));
+            var mask = function (c) {
+                if (c === " ") {
+                    return " * ";
+                };
+                var _35 = isGuessed(Data_String.toUpper(c)) || gameOver(_5.value0.status);
+                if (_35) {
+                    return c;
+                };
+                if (!_35) {
+                    return "_";
+                };
+                throw new Error("Failed pattern match");
+            };
+            var maskedSolution = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("solution") ])([ Thermite_Html.text(Data_String.joinWith(" ")(Data_Array.map(mask)(Data_String.split("")(_5.value0.solution)))) ]);
+            var gallowsSrc = (function () {
+                var _36 = Data_Array.length(misses(_5));
+                if (_36 === 0) {
+                    return "hm0.png";
+                };
+                if (_36 === 1) {
+                    return "hm1.png";
+                };
+                if (_36 === 2) {
+                    return "hm2.png";
+                };
+                if (_36 === 3) {
+                    return "hm3.png";
+                };
+                if (_36 === 4) {
+                    return "hm4.png";
+                };
+                if (_36 === 5) {
+                    return "hm5.png";
+                };
+                return "hm6.png";
+            })();
+            var gallows = Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("gallows") ])([ Thermite_Html_Elements.img([ Thermite_Html_Attributes.src(gallowsSrc), Thermite_Html_Attributes.alt("Gallows") ])([  ]) ]);
+            return Thermite_Html_Elements.div([ Thermite_Html_Attributes.className("hangman") ])([ letterButtons, maskedSolution, gallows, statusBar ]);
+        };
+    };
+};
+var solved = function (_8) {
+    var guessed = anyCaseMatch(_8.value0.guesses);
+    return Prelude["=="](Prelude.eqArray(Prelude.eqString))(Data_String.split("")(_8.value0.solution))(Data_Array.filter(guessed)(Data_String.split("")(_8.value0.solution)));
 };
 var _State = function (__dict_Functor_1) {
     return function (f) {
@@ -5866,18 +5930,47 @@ var _State = function (__dict_Functor_1) {
         };
     };
 };
-var performAction = function (_7) {
+var performAction = function (_10) {
     return function (action) {
         if (action instanceof Load) {
             return Thermite_Action.asyncSetState(puzzleLoader);
         };
-        var updateState = function (_8) {
-            if (_8 instanceof Guess) {
-                return Optic_Core["++~"](Prelude.semigroupString)(Optic_Core[".."](Prelude.semigroupoidArr)(_State(Data_Identity.functorIdentity))(guesses(Data_Identity.functorIdentity)))(_8.value0);
+        var updateStatus = function (_13) {
+            var gameStatus = (function () {
+                var _46 = Data_Array.length(misses(_13)) > 5;
+                if (_46) {
+                    return new Lost("Awww. Would you like to try again?");
+                };
+                if (!_46) {
+                    var _47 = solved(_13);
+                    if (_47) {
+                        return new Won("Great Game! How about another?");
+                    };
+                    if (!_47) {
+                        return Playing.value;
+                    };
+                    throw new Error("Failed pattern match");
+                };
+                throw new Error("Failed pattern match");
+            })();
+            return new State((function () {
+                var _48 = {};
+                for (var _49 in _13.value0) {
+                    if (_13.value0.hasOwnProperty(_49)) {
+                        _48[_49] = _13.value0[_49];
+                    };
+                };
+                _48.status = gameStatus;
+                return _48;
+            })());
+        };
+        var updateState = function (_12) {
+            if (_12 instanceof Guess) {
+                return Optic_Core["++~"](Prelude.semigroupString)(Optic_Core[".."](Prelude.semigroupoidArr)(_State(Data_Identity.functorIdentity))(guesses(Data_Identity.functorIdentity)))(_12.value0);
             };
             throw new Error("Failed pattern match");
         };
-        return Thermite_Action.modifyState(updateState(action));
+        return Thermite_Action.modifyState(Prelude["<<<"](Prelude.semigroupoidArr)(updateStatus)(updateState(action)));
     };
 };
 var spec = Thermite.componentWillMount(Load.value)(Thermite.simpleSpec(initialState)(performAction)(render));
@@ -5890,20 +5983,28 @@ module.exports = {
     State: State, 
     Guess: Guess, 
     Load: Load, 
+    Playing: Playing, 
+    Won: Won, 
+    Lost: Lost, 
+    Err: Err, 
+    anyCaseMatch: anyCaseMatch, 
     main: main, 
     spec: spec, 
     performAction: performAction, 
     loadedState: loadedState, 
     puzzleLoader: puzzleLoader, 
     puzzleGet: puzzleGet, 
+    solved: solved, 
+    misses: misses, 
     render: render, 
+    gameOver: gameOver, 
     initialState: initialState, 
     guesses: guesses, 
     _State: _State, 
     puzzleIsForeign: puzzleIsForeign
 };
 
-},{"Control.Monad.Eff":7,"Data.Array":11,"Data.Either":16,"Data.Foldable":17,"Data.Foreign":23,"Data.Foreign.Class":18,"Data.Foreign.Index":19,"Data.Identity":25,"Data.String":36,"Debug.Trace":39,"Optic.Core":41,"Prelude":50,"Thermite":58,"Thermite.Action":51,"Thermite.Events":52,"Thermite.Html":55,"Thermite.Html.Attributes":53,"Thermite.Html.Elements":54,"Thermite.Types":57}],41:[function(require,module,exports){
+},{"Control.Monad.Eff":7,"Data.Array":11,"Data.Either":16,"Data.Foldable":17,"Data.Foreign":23,"Data.Foreign.Class":18,"Data.Foreign.Index":19,"Data.Identity":25,"Data.String":36,"Data.Tuple":38,"Debug.Trace":39,"Optic.Core":41,"Prelude":50,"Thermite":58,"Thermite.Action":51,"Thermite.Events":52,"Thermite.Html":55,"Thermite.Html.Attributes":53,"Thermite.Html.Elements":54,"Thermite.Types":57}],41:[function(require,module,exports){
 // Generated by psc-make version 0.6.9.3
 "use strict";
 var Prelude = require("Prelude");

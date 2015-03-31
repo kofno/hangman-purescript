@@ -11,24 +11,31 @@ import qualified Thermite.Html.Attributes as A
 import Optic.Core (LensP(), (..), (++~))
 
 import Control.Monad.Eff
-import Data.Array (map, length, snoc)
+import Data.Array (map, length, snoc, filter)
 import Data.String (indexOf, split, joinWith, toUpper)
 import Data.Foldable (foldr, elem)
 import Data.Foreign
 import Data.Foreign.Class
 import Data.Either
+import Data.Tuple
 
 import Debug.Trace
+
+data Status = Playing
+            | Won String
+            | Lost String
+            | Err String
 
 data Action = Guess String
             | Load
 
 ------------ State and some Lenses --------------------
-data State = State { guesses :: String
+data State = State { guesses  :: String
                    , solution :: String
+                   , status   :: Status
                    }
 
-_State :: LensP State { guesses :: _, solution :: _ }
+_State :: LensP State { guesses :: _, solution :: _, status :: _ }
 _State f (State st) = State <$> f st
 
 guesses :: forall r. LensP { guesses :: _ | r } _
@@ -46,13 +53,18 @@ instance puzzleIsForeign :: IsForeign Puzzle where
     return $ Puzzle puzzle
 
 initialState :: State
-initialState = State { guesses : ""
-                     , solution : "This is just a placeholder"
+initialState = State { guesses  : ""
+                     , solution : ""
+                     , status   : Playing
                      }
 
+gameOver :: Status -> Boolean
+gameOver Playing = false
+gameOver _       = true
+
 render :: T.Render State _ Action
-render ctx (State st) _ =
-  T.div [A.className "hangman"] [letterButtons, maskedSolution, gallows, newGame]
+render ctx state@(State st) _ =
+  T.div [A.className "hangman"] [letterButtons, maskedSolution, gallows, statusBar]
     where
       letterButtons :: T.Html _
       letterButtons = T.div [A.className "btn-grp"] $ map letterButton letters
@@ -60,8 +72,17 @@ render ctx (State st) _ =
       letterButton :: String -> T.Html _
       letterButton l = T.button [ A.className (letterClass l)
                                 , T.onClick ctx (\_ -> Guess l)
-                                , A.disabled (isGuessed l)
+                                , A.disabled (isGuessed l || gameOver st.status)
                                 ] [ T.text l ]
+
+      statusBar :: T.Html _
+      statusBar = T.div [A.className "status"] [statusMsg st.status, newGame]
+
+      statusMsg :: Status -> T.Html _
+      statusMsg (Err s)  = T.div [ A.className "error" ] [ T.text s ]
+      statusMsg (Won s)  = T.div [ A.className "good"  ] [ T.text s ]
+      statusMsg (Lost s) = T.div [ A.className "bad"   ] [ T.text s ]
+      statusMsg _        = T.div [] []
 
       newGame :: T.Html _
       newGame = T.button [T.onClick ctx (\_ -> Load)] [T.text "New Game"]
@@ -82,7 +103,7 @@ render ctx (State st) _ =
 
       mask :: String -> String
       mask " " = " * "
-      mask c = if isGuessed (toUpper c)
+      mask c = if isGuessed (toUpper c) || gameOver st.status
                   then c
                   else "_"
 
@@ -94,7 +115,7 @@ render ctx (State st) _ =
                       ]
 
       gallowsSrc :: String
-      gallowsSrc = case length misses of
+      gallowsSrc = case length (misses state) of
                         0 -> "hm0.png"
                         1 -> "hm1.png"
                         2 -> "hm2.png"
@@ -103,16 +124,22 @@ render ctx (State st) _ =
                         5 -> "hm5.png"
                         _ -> "hm6.png"
 
-      misses :: [String]
-      misses = foldr miss [] (split "" st.guesses)
-        where
-          miss :: String -> [String] -> [String]
-          miss s seen = if hit s || s `elem` seen
-                           then seen
-                           else seen `snoc` s
+misses :: State -> [String]
+misses (State st) = foldr miss [] (split "" st.guesses)
+  where
+    miss :: String -> [String] -> [String]
+    miss s seen = if hit s || s `elem` seen
+                     then seen
+                     else seen `snoc` s
 
-          hit :: String -> Boolean
-          hit s = toUpper s `elem` split "" (toUpper st.solution)
+    hit :: String -> Boolean
+    hit = anyCaseMatch st.solution
+
+solved :: State -> Boolean
+solved (State st) = split "" st.solution == filter guessed (split "" st.solution)
+  where
+    guessed :: String -> Boolean
+    guessed = anyCaseMatch st.guesses
 
 foreign import puzzleGet
   """
@@ -133,17 +160,29 @@ foreign import puzzleGet
 puzzleLoader :: forall eff. (State -> Eff eff Unit) -> Eff eff Unit
 puzzleLoader f = puzzleGet \txt -> f (loadedState (readJSON txt :: F Puzzle))
 
--- | We'll need to handle the error condition when we add a game status to the state
 loadedState :: F Puzzle -> State
-loadedState (Right (Puzzle s)) = State { solution : s, guesses : "" }
-loadedState _                  = State { solution : "", guesses : "" }
+loadedState (Right (Puzzle s)) = State { solution : s, guesses : "", status : Playing }
+loadedState _                  = State { solution : ""
+                                       , guesses : ""
+                                       , status : Err "Puzzle failed to load"
+                                       }
 
 performAction :: T.PerformAction _ Action (T.Action _ State)
 performAction _ Load   = T.asyncSetState puzzleLoader
-performAction _ action = T.modifyState (updateState action)
+performAction _ action = T.modifyState (updateStatus <<< updateState action)
   where
     updateState :: Action -> State -> State
     updateState (Guess l)  = _State .. guesses ++~ l
+
+    updateStatus :: State -> State
+    updateStatus state@(State st) = State st { status = gameStatus }
+      where
+        gameStatus :: Status
+        gameStatus = if length (misses state) > 5
+                        then (Lost "Awww. Would you like to try again?")
+                        else if solved state
+                                  then (Won "Great Game! How about another?")
+                                  else Playing
 
 spec :: T.Spec _ State _ Action
 spec = T.simpleSpec initialState performAction render
@@ -152,3 +191,7 @@ spec = T.simpleSpec initialState performAction render
 main = do
   let component = T.createClass spec
   T.render component {}
+
+-- | Generalize impl of hit
+anyCaseMatch :: String -> String -> Boolean
+anyCaseMatch ss s = (toUpper s `elem` split "" (toUpper ss)) || s == " "
