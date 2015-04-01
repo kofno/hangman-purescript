@@ -1,6 +1,8 @@
 # hangman-purescript
 Web based hangman game, written in Purescript. You know, for fun.
 
+[Play the Game!](https://evening-refuge-5245.herokuapp.com)
+
 ## Client
 The client code is written in purescript using Thermite (Reactjs). I really like the way react style code fits purescript. It reminds me a bit of working with Elm.
 
