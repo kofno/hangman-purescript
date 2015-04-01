@@ -1,3 +1,9 @@
+.hangman {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
 .guessed {
   text-decoration: underline overline;
 }
@@ -5,4 +11,36 @@
 .solution {
   font-family: "Lucida Console", Monaco, monospace;
 }
+
+.bad {
+  background-color: #eee;
+  border: 1px solid #ddd;
+  display: block;
+  padding: 10px;
+  margin: 10px;
+}
+
+.good {
+  background-color: lightgreen;
+  border: 1px solid darkgreen;
+  display: block;
+  padding: 10px;
+  margin: 10px;
+}
+
+.error {
+  background-color: pink;
+  border: 1px solid red;
+  display: block;
+  padding: 10px;
+  margin: 10px;
+}
+
+#preload-00 { background: url(hm0.png) no-repeat -9999px -9999px; }
+#preload-01 { background: url(hm1.png) no-repeat -9999px -9999px; }
+#preload-02 { background: url(hm2.png) no-repeat -9999px -9999px; }
+#preload-03 { background: url(hm3.png) no-repeat -9999px -9999px; }
+#preload-04 { background: url(hm4.png) no-repeat -9999px -9999px; }
+#preload-05 { background: url(hm5.png) no-repeat -9999px -9999px; }
+#preload-06 { background: url(hm6.png) no-repeat -9999px -9999px; }
 

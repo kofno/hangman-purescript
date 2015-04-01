@@ -954,7 +954,7 @@ PS.Main = (function () {
       var app     = express();
       app.use('/', express.static('../client'));
       attachFn(app)();
-      var server = app.listen(3000, function() {
+      var server = app.listen(process.env.PORT || 3000, function() {
         var port = server.address().port
 
         console.log('Hangman listening on port %s', port)

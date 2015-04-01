@@ -8,64 +8,34 @@ import qualified Thermite.Html as T
 import qualified Thermite.Html.Elements as T
 import qualified Thermite.Html.Attributes as A
 
-import Optic.Core (LensP(), (..), (++~))
+import Optic.Core ((..), (++~))
 
 import Control.Monad.Eff
-import Data.Array (map, length, snoc, filter)
 import Data.String (indexOf, split, joinWith, toUpper)
-import Data.Foldable (foldr, elem)
-import Data.Foreign
-import Data.Foreign.Class
-import Data.Either
-import Data.Tuple
+import Data.Array (length, map)
 
-import Debug.Trace
-
-data Status = Playing
-            | Won String
-            | Lost String
-            | Err String
+import Hangman.State
+import Hangman.Puzzle
 
 data Action = Guess String
             | Load
 
------------- State and some Lenses --------------------
-data State = State { guesses  :: String
-                   , solution :: String
-                   , status   :: Status
-                   }
-
-_State :: LensP State { guesses :: _, solution :: _, status :: _ }
-_State f (State st) = State <$> f st
-
-guesses :: forall r. LensP { guesses :: _ | r } _
-guesses f st = f st.guesses <#> \i -> st { guesses = i }
-
---------------------------------------------------------
-
--- | Handle puzzle data coming from the backend service
-data Puzzle = Puzzle String
-
--- | Class instance for parsing JSON responses into a puzzle
-instance puzzleIsForeign :: IsForeign Puzzle where
-  read value = do
-    puzzle <- readProp "puzzle" value
-    return $ Puzzle puzzle
-
-initialState :: State
-initialState = State { guesses  : ""
-                     , solution : ""
-                     , status   : Playing
-                     }
-
-gameOver :: Status -> Boolean
-gameOver Playing = false
-gameOver _       = true
-
 render :: T.Render State _ Action
 render ctx state@(State st) _ =
-  T.div [A.className "hangman"] [letterButtons, maskedSolution, gallows, statusBar]
+  T.div [A.className "hangman"] [header, letterButtons, maskedSolution, gallows, statusBar]
     where
+      header :: T.Html _
+      header = T.div [ A.className "pure-menu pure-menu-horizontal" ]
+                     [ T.h1 [ A.className "pure-menu-heading" ] [ T.text "Hangman: Purescript" ]
+                     , T.ul [ A.className "pure-menu-list" ]
+                            [ T.li [ A.className "pure-menu-item" ]
+                                   [ T.a [ A.href "https://github.com/kofno/hangman-purescript"
+                                         , A.className "pure-menu-link"
+                                         ] [T.text "Source"]
+                                   ]
+                            ]
+                     ]
+
       letterButtons :: T.Html _
       letterButtons = T.div [A.className "btn-grp"] $ map letterButton letters
 
@@ -79,9 +49,15 @@ render ctx state@(State st) _ =
       statusBar = T.div [A.className "status"] [statusMsg st.status, newGame]
 
       statusMsg :: Status -> T.Html _
-      statusMsg (Err s)  = T.div [ A.className "error" ] [ T.text s ]
-      statusMsg (Won s)  = T.div [ A.className "good"  ] [ T.text s ]
-      statusMsg (Lost s) = T.div [ A.className "bad"   ] [ T.text s ]
+      statusMsg (Err s)  = T.div [ A.className "error" ] [ T.strong' [T.text "Error! "]
+                                                         , T.text s
+                                                         ]
+      statusMsg (Won s)  = T.div [ A.className "good"  ] [ T.strong' [T.text "Victory! "]
+                                                         , T.text s
+                                                         ]
+      statusMsg (Lost s) = T.div [ A.className "bad"   ] [ T.strong' [T.text "*Sad Trombone* "]
+                                                         , T.text s
+                                                         ]
       statusMsg _        = T.div [] []
 
       newGame :: T.Html _
@@ -124,49 +100,6 @@ render ctx state@(State st) _ =
                         5 -> "hm5.png"
                         _ -> "hm6.png"
 
-misses :: State -> [String]
-misses (State st) = foldr miss [] (split "" st.guesses)
-  where
-    miss :: String -> [String] -> [String]
-    miss s seen = if hit s || s `elem` seen
-                     then seen
-                     else seen `snoc` s
-
-    hit :: String -> Boolean
-    hit = anyCaseMatch st.solution
-
-solved :: State -> Boolean
-solved (State st) = split "" st.solution == filter guessed (split "" st.solution)
-  where
-    guessed :: String -> Boolean
-    guessed = anyCaseMatch st.guesses
-
-foreign import puzzleGet
-  """
-  function puzzleGet(callback) {
-    return function() {
-      var ajax = new XMLHttpRequest();
-      ajax.onreadystatechange = function() {
-        if (ajax.readyState == 4) {
-          callback(ajax.responseText)();
-        }
-      }
-      ajax.open("GET", "/puzzle", true);
-      ajax.send();
-    }
-  }
-  """ :: forall eff a. (a -> Eff eff Unit) -> Eff eff Unit
-
-puzzleLoader :: forall eff. (State -> Eff eff Unit) -> Eff eff Unit
-puzzleLoader f = puzzleGet \txt -> f (loadedState (readJSON txt :: F Puzzle))
-
-loadedState :: F Puzzle -> State
-loadedState (Right (Puzzle s)) = State { solution : s, guesses : "", status : Playing }
-loadedState _                  = State { solution : ""
-                                       , guesses : ""
-                                       , status : Err "Puzzle failed to load"
-                                       }
-
 performAction :: T.PerformAction _ Action (T.Action _ State)
 performAction _ Load   = T.asyncSetState puzzleLoader
 performAction _ action = T.modifyState (updateStatus <<< updateState action)
@@ -192,6 +125,3 @@ main = do
   let component = T.createClass spec
   T.render component {}
 
--- | Generalize impl of hit
-anyCaseMatch :: String -> String -> Boolean
-anyCaseMatch ss s = (toUpper s `elem` split "" (toUpper ss)) || s == " "
