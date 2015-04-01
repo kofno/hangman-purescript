@@ -36,6 +36,8 @@
   margin: 10px;
 }
 
+:focus { outline: none; }
+
 #preload-00 { background: url(hm0.png) no-repeat -9999px -9999px; }
 #preload-01 { background: url(hm1.png) no-repeat -9999px -9999px; }
 #preload-02 { background: url(hm2.png) no-repeat -9999px -9999px; }
