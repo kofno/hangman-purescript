@@ -20,9 +20,17 @@ import Hangman.Puzzle
 data Action = Guess String
             | Load
 
+foreign import getKeyPressed
+  "function getKeyPressed(e) {\
+  \  return String.fromCharCode(e.keyCode);\
+  \}" :: T.KeyboardEvent -> String 
+
 render :: T.Render State _ Action
 render ctx state@(State st) _ =
-  T.div [A.className "hangman"] [header, letterButtons, maskedSolution, gallows, statusBar]
+  T.div [ A.className "hangman"
+        , A.tabIndex "1"
+        , T.onKeyDown ctx (Guess <<< toUpper <<< getKeyPressed)
+        ] [header, letterButtons, maskedSolution, gallows, statusBar]
     where
       header :: T.Html _
       header = T.div [ A.className "pure-menu pure-menu-horizontal" ]
