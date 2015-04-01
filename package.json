@@ -2,7 +2,7 @@
   "name": "hangman-server",
   "version": "1.0.0",
   "description": "Serves puzzles to purescript server frontend",
-  "main": "dist/Main.js",
+  "main": "server/dist/Main.js",
   "directories": {
     "test": "test"
   },
@@ -11,6 +11,7 @@
   },
   "devDependencies": {},
   "scripts": {
+    "start": "node server/dist/Main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
