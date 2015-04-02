@@ -13,23 +13,34 @@ import Optic.Core ((..), (++~))
 import Control.Monad.Eff
 import Data.String (indexOf, split, joinWith, toUpper)
 import Data.Array (length, map)
+import Data.Foldable (elem)
+import Data.Maybe
 
 import Hangman.State
 import Hangman.Puzzle
 
-data Action = Guess String
+data Action = Guess (Maybe String)
             | Load
+
+letters :: [String]
+letters = split "" "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+guessValue :: String -> Maybe String
+guessValue l =
+  if toUpper l `elem` letters
+     then Just l
+     else Nothing
 
 foreign import getKeyPressed
   "function getKeyPressed(e) {\
   \  return String.fromCharCode(e.keyCode);\
-  \}" :: T.KeyboardEvent -> String 
+  \}" :: T.KeyboardEvent -> String
 
 render :: T.Render State _ Action
 render ctx state@(State st) _ =
   T.div [ A.className "hangman"
         , A.tabIndex "1"
-        , T.onKeyDown ctx (Guess <<< toUpper <<< getKeyPressed)
+        , T.onKeyDown ctx (Guess <<< guessValue <<< toUpper <<< getKeyPressed)
         ] [header, letterButtons, maskedSolution, gallows, statusBar]
     where
       header :: T.Html _
@@ -49,7 +60,7 @@ render ctx state@(State st) _ =
 
       letterButton :: String -> T.Html _
       letterButton l = T.button [ A.className (letterClass l)
-                                , T.onClick ctx (\_ -> Guess l)
+                                , T.onClick ctx (\_ -> Guess (Just l))
                                 , A.disabled (isGuessed l || gameOver st.status)
                                 ] [ T.text l ]
 
@@ -78,9 +89,6 @@ render ctx state@(State st) _ =
       letterClass l = if (isGuessed l)
                            then "btn guessed"
                            else "btn"
-
-      letters :: [String]
-      letters = split "" "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
       maskedSolution :: T.Html _
       maskedSolution = T.div [A.className "solution"] [T.text $ joinWith " " (map mask $ split "" st.solution)]
@@ -113,7 +121,8 @@ performAction _ Load   = T.asyncSetState puzzleLoader
 performAction _ action = T.modifyState (updateStatus <<< updateState action)
   where
     updateState :: Action -> State -> State
-    updateState (Guess l)  = _State .. guesses ++~ l
+    updateState (Guess (Just l))  = _State .. guesses ++~ l
+    updateState _          = id
 
     updateStatus :: State -> State
     updateStatus state@(State st) = State st { status = gameStatus }

@@ -11,9 +11,11 @@ module Hangman.State
 
 import Optic.Core (LensP())
 
-import Data.String (split, toUpper)
+import Data.String (split)
 import Data.Foldable (foldr, elem)
 import Data.Array (snoc, filter)
+
+import Hangman.Util (anyCaseMatch)
 
 data Status = Playing
             | Won String
@@ -61,6 +63,3 @@ solved (State st) = split "" st.solution == filter guessed (split "" st.solution
     guessed :: String -> Boolean
     guessed = anyCaseMatch st.guesses
 
--- | Generalize impl of hit
-anyCaseMatch :: String -> String -> Boolean
-anyCaseMatch ss s = (toUpper s `elem` split "" (toUpper ss)) || s == " "
